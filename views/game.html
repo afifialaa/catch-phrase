@@ -1,0 +1,74 @@
+<html>
+
+<head>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+</head>
+
+<body>
+    <h1>Game Page</h1>
+    <div class="container">
+        <video autoplay="true" id="videoElement"></video>
+    </div>
+</body>
+<script>
+    const socket = io();
+    const peer = new Peer(undefined, {
+        host: '/',
+        port: 9000,
+    });
+
+    peer.on('open', id => {
+        socket.emit('join-game', id, localStorage.getItem('gameToken'));
+    })
+
+
+    const join = (userId) => {
+        const videoEl = document.getElementById('videoElement');
+
+        if (navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function (stream) {
+                    videoEl.srcObject = stream;
+                    socket.emit('join-game', localStorage.getItem('gameToken'), userId);
+                    const call = peer.call();
+                })
+                .catch(function (error) {
+                    console.log("Something went wrong!");
+                });
+        }
+    }
+
+
+
+    const create = (userId) => {
+        const videoEl = document.getElementById('videoElement');
+
+        if (navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function (stream) {
+                    videoEl.srcObject = stream;
+                    socket.emit('create-game', userId);
+                })
+                .catch(function (error) {
+                    console.log("Something went wrong!");
+                });
+        }
+    }
+
+
+
+</script>
+
+</html>
