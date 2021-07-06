@@ -30,31 +30,51 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json())
 
-const gameRoutes = require('./routes/game.routes');
+const roomRoutes = require('./routes/room.routes');
 
-app.get('/', (req, res)=>{
+app.get('/', (req, res) => {
     return res.render('index.html');
 })
 
-app.use('/game', gameRoutes);
+app.use('/room', roomRoutes);
 
-let gameToken = '';
-
+/**
+ * Socket connection event
+ * @listens
+ */
 io.on('connection', (socket) => {
 
-    socket.on('join-game', (userId, gameToken)=>{
-        console.log('user id: ', userId);
-        console.log('game token: ', gameToken);
-        socket.join(gameToken);
+    /**
+     * Join game event handle
+     * @listens
+    */
+    socket.on('join-room', (userId, roomToken) => {
+        socket.join(roomToken);
         socket.broadcast.emit('user-connected', userId);
+        // io.in(roomToken).emit('user-connected', userId);
     })
 
-    socket.on('create-game', (userId, gameToken)=>{
-        socket.in(gameToken).emit('testing');
+    /**
+     * Create room event handle
+     * @listens
+     */
+    socket.on('create-room', (roomToken) => {
+        console.log('creating room event - token ', roomToken);
+        socket.join(roomToken);
     })
-
 });
 
-server.listen(4000, () => {
-    console.log('listening on *:4000');
-})
+/**
+ * validate room is live
+ * @function 
+ * @param {string} roomToken
+*/
+function isRoomLive(roomToken) {
+    if (app.locals.liveRooms.has(roomToken)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+module.exports = server;

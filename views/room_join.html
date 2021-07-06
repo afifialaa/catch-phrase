@@ -17,58 +17,63 @@
 </head>
 
 <body>
-    <h1>Game Page</h1>
-    <div class="container">
+    <h1>Room Page</h1>
+    <div class="container" id="canvas">
         <video autoplay="true" id="videoElement"></video>
     </div>
 </body>
 <script>
+
     const socket = io();
     const peer = new Peer(undefined, {
         host: '/',
         port: 9000,
     });
 
-    peer.on('open', id => {
-        socket.emit('join-game', id, localStorage.getItem('gameToken'));
+    peer.on('open', userId => {
+        join(userId);
     })
 
+    peer.on('call', (call) => {
+        call.answer();
+        call.on('stream', (stream) => {
+            console.log('answering');
+            createVideoElement(stream);
+        })
+    })
 
-    const join = (userId) => {
+    socket.on('user-connected', (userId)=>{
+        console.log('user connected', userId);
+    })
+
+    // Create video element for user
+    function createVideoElement(stream) {
+        const canvasEl = document.getElementById('canvas');
+        let videoEl = document.createElement('video');
+        videoEl.autoplay = true;
+        videoEl.srcObject = stream;
+
+        canvasEl.appendChild(videoEl);
+    }
+
+
+    // Join a room with token
+    function join(userId) {
         const videoEl = document.getElementById('videoElement');
 
         if (navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ video: true })
                 .then(function (stream) {
                     videoEl.srcObject = stream;
-                    socket.emit('join-game', localStorage.getItem('gameToken'), userId);
-                    const call = peer.call();
+                    socket.emit('join-room', userId, localStorage.getItem('roomToken'));
+                    console.log('calling peer with id: ', localStorage.getItem('roomToken'));
+                    const call = peer.call(localStorage.getItem('roomToken'), stream);
                 })
                 .catch(function (error) {
                     console.log("Something went wrong!");
                 });
         }
     }
-
-
-
-    const create = (userId) => {
-        const videoEl = document.getElementById('videoElement');
-
-        if (navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function (stream) {
-                    videoEl.srcObject = stream;
-                    socket.emit('create-game', userId);
-                })
-                .catch(function (error) {
-                    console.log("Something went wrong!");
-                });
-        }
-    }
-
-
-
 </script>
 
 </html>

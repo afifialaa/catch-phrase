@@ -21,14 +21,11 @@
             <div class="col-md-4">
                 <div class="form-group">
                     <input type="text" id="tokenInputField" class="form-control"
-                        placeholder="Game Token ex: c292fa67-8715-4afc-851b-71671e8ddd35">
-                    <button id="joinGameBtn" class="btn btn-success btn-md btn-block">Join Game</button>
+                        placeholder="Room Token ex: c292fa67-8715-4afc-851b-71671e8ddd35">
+                    <button id="joinRoomBtn" class="btn btn-success btn-md btn-block">Join Room</button>
                 </div>
                 <div>
-                    <button id="joinRandomGameBtn" class="btn btn-success btn-md btn-block">Join Random Game</button>
-                </div>
-                <div>
-                    <button id="createGameBtn" class="btn btn-success btn-md btn-block">Create Game</button>
+                    <button id="createRoomBtn" class="btn btn-success btn-md btn-block">Create Room</button>
                 </div>
             </div>
             <div class="col-md-4"></div>
@@ -37,54 +34,39 @@
     </div>
 </body>
 <script>
-    console.log('hello world');
-
-    const joinRandGameBtn = document.getElementById('joinRandomGameBtn');
-    const joinGameBtn = document.getElementById('joinGameBtn');
-    const createGameBtn = document.getElementById('createGameBtn');
+    const joinRoomBtn = document.getElementById('joinRoomBtn');
+    const createRoomBtn = document.getElementById('createRoomBtn');
 
     const tokenInputField = document.getElementById('tokenInputField');
 
-    // Redirect to game with token
-    const getToken = () => {
-        axios.get('http://localhost:4000/game/createGame').then(response => {
-            console.log(response.data.gameToken);
-            localStorage.setItem('gameToken', response.data.gameToken);
-            window.location.replace(`http://localhost:4000/game/${response.data.gameToken}`);
+    // Fetch room token from server
+    function getToken(){
+        axios.get('http://localhost:8080/room/createRoom').then(response => {
+            localStorage.setItem('roomToken', response.data.roomToken);
+            window.location.replace(`http://localhost:8080/room/${response.data.roomToken}`);
         })
     }
 
-    // Adding click event to button
-    createGameBtn.addEventListener('click', event => {
+    // Create room event listener
+    createRoomBtn.addEventListener('click', event => {
         getToken();
     });
 
-    // Adding click event to button
-    joinGameBtn.addEventListener('click', (event) => {
-        joinGame();
+    // Join room event listener
+    joinRoomBtn.addEventListener('click', (event) => {
+        joinRoom();
     })
 
-    // Join random game button handler
-    const joinRandomGame = () => {
-        console.log('Joining random game');
-    }
+    // Join room button handler
+    function joinRoom() {
+        let roomToken = tokenInputField.value;
 
-    // Join game button hanlder
-    const joinGame = () => {
-        console.log('Joining game with token');
-        let gameToken = tokenInputField.value;
-
-        axios.post('http://localhost:4000/game/join', {
-            gameToken: gameToken
+        axios.get('http://localhost:8080/room/join', {
+            roomToken: roomToken
         }).then(response => {
-            localStorage.setItem('gameToken', response.data.gameToken);
-            window.location.replace(`http://localhost:4000/game/${response.data.gameToken}`);
+            localStorage.setItem('roomToken', roomToken);
+            window.location.replace(`http://localhost:8080/room/join/${roomToken}`);
         })
-    }
-
-    // Create game button hanlder
-    const createGame = () => {
-        console.log('Creating game');
     }
 
 </script>
