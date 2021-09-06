@@ -30,50 +30,53 @@
         port: 9000,
     });
 
+    let currStream;
+
+    /* Connection to PeerServer is established */
     peer.on('open', userId => {
-        join(userId);
+	join(userId);
     })
 
+    /* Getting own video stream */
+    async function join(userId) {
+        const videoEl = document.getElementById('videoElement');
+
+        if (navigator.mediaDevices.getUserMedia) {
+	    try{
+		let stream = await navigator.mediaDevices.getUserMedia({ video: true })
+		videoEl.srcObject = stream;
+		peer.call(localStorage.getItem('roomToken'), stream);
+	    }catch(err){
+		console.log('there was an error');
+	    }
+	}else{
+	    console.log('No media');
+	}
+    }
+
+    // Recieving a call from a peer
     peer.on('call', (call) => {
         call.answer();
         call.on('stream', (stream) => {
-            console.log('answering');
-            createVideoElement(stream);
+            createVideoElement(stream, call.peer);
         })
     })
 
-    socket.on('user-connected', (userId)=>{
-        console.log('user connected', userId);
-    })
-
-    // Create video element for user
-    function createVideoElement(stream) {
-        const canvasEl = document.getElementById('canvas');
+    /* Create video element for guest */
+    function createVideoElement(stream, peerId) {
+	const canvasEl = document.getElementById('canvas');
         let videoEl = document.createElement('video');
         videoEl.autoplay = true;
         videoEl.srcObject = stream;
 
+	let peerIdEl = document.createElement('h3');
+	peerIdEl.innerHTML = peerId;
+
+        canvasEl.appendChild(peerIdEl);
         canvasEl.appendChild(videoEl);
     }
 
-
-    // Join a room with token
-    function join(userId) {
-        const videoEl = document.getElementById('videoElement');
-
-        if (navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function (stream) {
-                    videoEl.srcObject = stream;
-                    socket.emit('join-room', userId, localStorage.getItem('roomToken'));
-                    console.log('calling peer with id: ', localStorage.getItem('roomToken'));
-                    const call = peer.call(localStorage.getItem('roomToken'), stream);
-                })
-                .catch(function (error) {
-                    console.log("Something went wrong!");
-                });
-        }
-    }
+    
 </script>
 
 </html>

@@ -38,51 +38,49 @@
     });
 
     let streamObj;
+    localStorage.setItem('players', 1);
 
+    /* Connection to a PeerServer is established */
     peer.on('open', userId => {
         createRoom(userId);
     })
 
+    /* Recieving a call for peer */
     peer.on('call', (call) => {
-        call.answer();
-        call.on('stream', (stream) => {
-            createVideoElement(stream);
-        })
+	call.answer();
+	call.on('stream', (remoteStream) => {
+	    // Show stream in canvas
+	    createVideoElement(remoteStream, call.peer);
+	})
+	peer.call(call.peer, streamObj);
     })
 
-    socket.on('user-connected', (userId) => {
-        console.log('calling connected user ', userId);
-        const call = peer.call(userId, streamObj);
-    })
-
-    // Create video Element for guests
-    function createVideoElement(stream) {
+    /* Create video Element for players */
+    function createVideoElement(stream, peerId) {
         const canvasEl = document.getElementById('canvas');
         let videoEl = document.createElement('video');
         videoEl.autoplay = true;
         videoEl.srcObject = stream;
 
+	let peerIdEl = document.createElement('p');
+	peerIdEl.innerText = peerId;
+
+        canvasEl.appendChild(peerIdEl);
         canvasEl.appendChild(videoEl);
     }
 
-    // Create video element for user
-    function createRoom(userId) {
+    /* Create video element for user */
+    async function createRoom(userId) {
         const videoEl = document.getElementById('videoElement');
 
         if (navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function (stream) {
-                    streamObj = stream;
-                    videoEl.srcObject = stream;
-
-                    socket.emit('create-room', userId);
-                })
-                .catch(function (error) {
-                    console.log("Something went wrong!");
-                });
-        }
+            let stream = await navigator.mediaDevices.getUserMedia({ video: true })
+	    streamObj = stream;
+	    videoEl.srcObject = stream;
+	}else{
+	    console.log('No media');
+	}
     }
-
 
 </script>
 
